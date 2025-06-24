@@ -1,4 +1,5 @@
 
+
 export enum Language {
   EN = 'en',
   ML = 'ml',
@@ -28,10 +29,5 @@ export interface Translations {
 export interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  translate: (key: string, fallback?: string) => string;
+  translate: (key: string, fallback?: string, replacements?: Record<string, string | number>) => string;
 }
-
-
-
-
-
