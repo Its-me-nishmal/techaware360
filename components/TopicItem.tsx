@@ -17,7 +17,7 @@ const TopicItem = ({ topic, topicIndex, categorySlug, isUnlocked, isCompleted }:
   const [isReading, setIsReading] = useState(false);
   const { language, translate } = useLanguage();
   const { markTopicAsComplete } = useCourseProgress();
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const title = language === Language.EN ? topic.title_en : topic.title_ml;
   const content = language === Language.EN ? topic.content_en : topic.content_ml;
@@ -85,7 +85,7 @@ const TopicItem = ({ topic, topicIndex, categorySlug, isUnlocked, isCompleted }:
       >
         <h4 className={titleClasses}>{title}</h4>
         <div className="flex items-center space-x-2">
-          {isReading && !isCompleted && <Clock size={18} className="animate-spin text-blue-500" title={translate('readingTopic')} />}
+          {isReading && !isCompleted && <Clock size={18} className="animate-spin text-blue-500" />}
           {iconJsx}
         </div>
       </button>
