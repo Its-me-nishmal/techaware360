@@ -1,35 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n';
-import { GoogleUser, Language } from '../types';
-import { useAuth } from '../AuthContext'; // Import useAuth
-import { Gift, LogIn, Loader2 } from 'lucide-react';
+import { Language } from '../types';
+import { useAuth } from '../AuthContext';
+import { Gift, Loader2 } from 'lucide-react';
+
+// This would ideally be in a .env file, but for this exercise, we place it here.
+// The user should replace this with their actual Google Client ID.
+const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+
 
 const JoinPage = () => {
   const { translate, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const auth = useAuth(); // Use Auth context
+  const auth = useAuth();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState('');
   const [effectiveReferralCode, setEffectiveReferralCode] = useState<string | null>(null);
-
+  const signInButtonRef = useRef<HTMLDivElement>(null);
+  
+  // This effect handles page redirection based on authentication status.
   useEffect(() => {
-    // If user is already authenticated and payment is complete, redirect to course
+    // If already logged in and paid, go to course
     if (auth.isAuthenticated && auth.user?.paymentComplete) {
       navigate('/course', { replace: true });
-    }
-    // If user is authenticated but payment not complete, redirect to payment approval
+    } 
+    // If logged in but payment pending, go to payment page
     else if (auth.isAuthenticated && auth.user && !auth.user.paymentComplete) {
-      navigate('/payment-approval', { 
-        replace: true, 
-        state: { email: auth.user.email, name: auth.user.name, profilePicUrl: auth.user.profilePicUrl }
-      });
+      navigate('/payment-approval', { replace: true });
     }
   }, [auth.isAuthenticated, auth.user, navigate]);
 
-
+  // This effect retrieves any referral code from URL or local storage.
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const refFromQuery = queryParams.get('ref');
@@ -42,51 +46,59 @@ const JoinPage = () => {
       setEffectiveReferralCode(refFromStorage);
     }
   }, [location.search]);
-
-  const handleMockGoogleSignIn = async () => {
-    setIsLoading(true);
+  
+  const handleGoogleSignInCallback = async (response: any) => {
+    setIsSigningIn(true);
     setError('');
-
-    const mockGoogleUser: GoogleUser = {
-      googleId: `mockGoogleId_${Date.now()}`,
-      email: 'user.mock@example.com',
-      name: 'Mock User',
-      profilePicUrl: `https://avatar.iran.liara.run/username?username=${'Mock User'.replace(' ', '+')}`,
-    };
+    
+    const idToken = response.credential;
+    if (!idToken) {
+      setError(translate('unexpectedError', 'Google sign in failed to provide credentials.'));
+      setIsSigningIn(false);
+      return;
+    }
 
     try {
-      const response = await auth.login(mockGoogleUser, effectiveReferralCode);
-      setIsLoading(false);
+      const result = await auth.login(idToken, effectiveReferralCode);
 
-      if (response.success) {
-        if (response.needsPayment) {
-          navigate('/payment-approval', { 
-            state: { 
-              email: mockGoogleUser.email, 
-              name: mockGoogleUser.name,
-              profilePicUrl: mockGoogleUser.profilePicUrl 
-            } 
-          });
-        } else {
-          // Successful login and payment complete (or not needed)
-          const from = location.state?.from?.pathname || '/course';
-          navigate(from, { replace: true });
-        }
+      if (result.success) {
+        // The redirection is now handled by the useEffect hook that watches auth state.
+        // This keeps the logic clean and centralized.
       } else {
-        setError(response.message || (language === Language.EN ? 'Login failed. Please try again.' : 'ലോഗിൻ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.'));
+        setError(result.message || translate('loginFailedError'));
       }
-    } catch (err) {
-      setIsLoading(false);
+    } catch (err: any) {
       console.error("Login process error:", err);
-      setError(language === Language.EN ? 'An unexpected error occurred.' : 'അപ്രതീക്ഷിതമായ ഒരു പിശക് സംഭവിച്ചു.');
+      setError(err.message || translate('unexpectedError'));
     }
+    // We don't set isSigningIn to false here because a successful login will trigger a re-render and navigation.
+    // If login fails, we want the error message to be visible.
+    setIsSigningIn(false);
   };
   
-  // If auth is loading, show a simple spinner
-  if (auth.isLoading) {
+  // This effect initializes and renders the Google Sign-In button.
+  useEffect(() => {
+    if (window.google?.accounts?.id && signInButtonRef.current) {
+        try {
+            window.google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleGoogleSignInCallback,
+            });
+            window.google.accounts.id.renderButton(
+                signInButtonRef.current,
+                { theme: 'outline', size: 'large', type: 'standard', text: 'continue_with', width: '320' }
+            );
+        } catch (error) {
+            console.error("Error initializing Google Sign-In", error);
+            setError("Could not initialize Google Sign-In. Please try again later.");
+        }
+    }
+  }, [handleGoogleSignInCallback]); // Dependency ensures callback has latest state
+
+  // Show a global loader if the initial auth check is in progress.
+  if (auth.isLoading && !auth.isAuthenticated) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
   }
-
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -104,18 +116,13 @@ const JoinPage = () => {
           </div>
         )}
         
-        <button
-          onClick={handleMockGoogleSignIn}
-          disabled={isLoading}
-          className="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-primary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-70"
-        >
-          {isLoading ? (
-            <Loader2 size={20} className="animate-spin mr-2" />
-          ) : (
-            <svg className="mr-2 -ml-1 w-5 h-5" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path></svg>
-          )}
-          {translate('signInWithGoogleButton')}
-        </button>
+        {isSigningIn ? (
+            <div className="flex justify-center items-center h-[50px]">
+                <Loader2 size={32} className="animate-spin text-primary" />
+            </div>
+        ) : (
+             <div ref={signInButtonRef} className="flex justify-center"></div>
+        )}
 
         {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
 

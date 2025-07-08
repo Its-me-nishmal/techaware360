@@ -1,4 +1,5 @@
 
+
 export enum Language {
   EN = 'en',
   ML = 'ml',
@@ -39,7 +40,7 @@ export interface ThemeContextType {
   toggleTheme: () => void;
 }
 
-// User data obtained from Google (mocked)
+// Data from Google that isn't part of our main user model yet
 export interface GoogleUser {
   googleId: string;
   email: string;
@@ -47,8 +48,12 @@ export interface GoogleUser {
   profilePicUrl?: string;
 }
 
-// Authenticated user details stored in AuthContext
-export interface AuthenticatedUser extends GoogleUser {
+// Authenticated user details stored in AuthContext, now received from backend
+export interface AuthenticatedUser {
+  googleId: string;
+  email: string;
+  name: string;
+  profilePicUrl?: string;
   paymentComplete: boolean;
   // Any other app-specific user details can be added here
 }
@@ -58,8 +63,22 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   user: AuthenticatedUser | null;
   token: string | null;
-  login: (googleAuthData: GoogleUser, referralCode?: string | null) => Promise<{ success: boolean; needsPayment?: boolean; message?: string }>;
+  login: (idToken: string, referralCode?: string | null) => Promise<{ success: boolean; needsPayment?: boolean; message?: string }>;
   logout: () => void;
   checkAuthStatus: () => Promise<void>;
-  updateUserPaymentStatus: (email: string) => Promise<{ success: boolean; message?: string }>;
+  updateUserPaymentStatus: () => Promise<{ success: boolean; message?: string }>;
+}
+
+// Extend the window object for Google Sign-In
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: { client_id: string; callback: (response: any) => void; }) => void;
+          renderButton: (parent: HTMLElement, options: any) => void;
+        };
+      };
+    };
+  }
 }

@@ -13,7 +13,7 @@ const PaymentApprovalPage = () => {
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   
-  // Prioritize user data from AuthContext, fallback to location state
+  // Prioritize user data from AuthContext, fallback to location state (for initial render before auth context is fully populated)
   const currentUser = auth.user || (location.state as { email: string; name: string; profilePicUrl?: string });
 
   useEffect(() => {
@@ -21,43 +21,37 @@ const PaymentApprovalPage = () => {
     if (auth.isAuthenticated && auth.user?.paymentComplete) {
       navigate('/course', { replace: true });
     }
-    // If no user data at all (neither in auth nor state), redirect to join
-    if (!currentUser?.email || !currentUser?.name) {
-      navigate('/join', { replace: true });
+    // If no user data at all (e.g., direct navigation), redirect to join
+    if (!auth.isLoading && !auth.isAuthenticated) {
+        navigate('/join', { replace: true });
     }
-  }, [auth.isAuthenticated, auth.user, currentUser, navigate]);
+  }, [auth.isAuthenticated, auth.user, auth.isLoading, navigate]);
 
 
   const handleCheckStatus = async () => {
-    if (!currentUser?.email) return;
-
     setIsCheckingStatus(true);
     setStatusMessage('');
     try {
-      // Call AuthContext function to update payment status
-      const response = await auth.updateUserPaymentStatus(currentUser.email);
+      // Call AuthContext function which now uses the stored token for auth
+      const response = await auth.updateUserPaymentStatus();
       if (response.success) {
         setStatusMessage(translate('paymentApprovedMessage', 'Payment approved! Redirecting to course...'));
-        // AuthContext will update isAuthenticated and user, ProtectedRoute logic will handle redirection
-        // or a manual redirect after a delay if preferred.
+        // AuthContext will update isAuthenticated and user, the useEffect hook will handle redirection.
+        // Adding a manual redirect after a delay for user feedback.
         setTimeout(() => {
-          if (auth.isAuthenticated && auth.user?.paymentComplete) {
-             navigate('/course', { replace: true });
-          } else {
-            // This case should ideally not happen if updateUserPaymentStatus worked
-             setStatusMessage(translate('paymentStatusCheckFailed', 'Could not verify approval. Please try again or contact support.'));
-          }
+          navigate('/course', { replace: true });
         }, 2000);
       } else {
         setStatusMessage(response.message || translate('paymentPendingApprovalMessage', 'Payment is still pending approval. Please check again later.'));
       }
     } catch (err) {
-      setStatusMessage(translate('paymentStatusError', 'Error checking payment status.'));
+        const error = err as Error;
+        setStatusMessage(error.message || translate('paymentStatusError', 'Error checking payment status.'));
     }
     setIsCheckingStatus(false);
   };
 
-  if (auth.isLoading || (!currentUser?.email || !currentUser?.name)) {
+  if (auth.isLoading || (!currentUser?.email && !auth.user)) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
   }
   
@@ -134,12 +128,12 @@ const PaymentApprovalPage = () => {
               disabled={isCheckingStatus || auth.isLoading}
               className="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-primary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-70"
             >
-              {isCheckingStatus || auth.isLoading ? (
+              {isCheckingStatus ? (
                 <Loader2 size={20} className="animate-spin mr-2" />
               ) : (
                 <CheckCircle size={20} className="mr-2" />
               )}
-              {translate('checkPaymentStatusButton', 'Check Payment Status')}
+              {translate('checkPaymentStatusButton', 'Confirm My Payment')}
             </button>
           </>
         
