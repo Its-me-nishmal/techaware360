@@ -8,10 +8,16 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const auth = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth(); // Destructure for clarity
   const location = useLocation();
 
-  if (auth.isLoading) {
+  // 1. Initial Authentication Check Loader:
+  // This loader displays ONLY when the app is in the process of determining
+  // the user's *initial* authentication status (e.g., checking local storage token).
+  // If `isAuthenticated` is already true, it means the initial check is complete,
+  // and we should not block rendering children even if `isLoading` becomes true
+  // due to a subsequent action like `updateUserPaymentStatus`.
+  if (!isAuthenticated && isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="animate-spin h-16 w-16 text-primary" />
@@ -19,20 +25,29 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!auth.isAuthenticated) {
-    // Redirect them to the /join page, but save the current location they were
-    // trying to go to when they were redirected. This allows us to send them
-    // along to that page after they login, which is a nicer user experience
-    // than dropping them off on the home page.
+  // 2. Unauthenticated User Redirect:
+  // If, after the initial load, the user is found not to be authenticated,
+  // redirect them to the join page.
+  if (!isAuthenticated) {
     return <Navigate to="/join" state={{ from: location }} replace />;
   }
 
-  // If authenticated but payment is not complete, redirect to payment approval
-  // Allow access to payment-approval page itself if that's where they are heading
-  if (auth.user && !auth.user.paymentComplete && location.pathname !== '/payment-approval') {
-     return <Navigate to="/payment-approval" state={{ from: location, email: auth.user.email, name: auth.user.name, profilePicUrl: auth.user.profilePicUrl }} replace />;
+  // 3. Payment Status Check and Redirect:
+  // If the user IS authenticated but their payment is not complete,
+  // and they are trying to access a page other than '/payment-approval',
+  // redirect them to the payment approval page.
+  // Note: `user` will always be defined here if `isAuthenticated` is true.
+  if (!user?.paymentComplete && location.pathname !== '/payment-approval') {
+     return <Navigate to="/payment-approval" state={{ from: location, email: user.email, name: user.name, profilePicUrl: user.profilePicUrl }} replace />;
   }
-  
+
+  // 4. Render Children:
+  // If all above conditions are false (i.e., user is authenticated,
+  // and either payment is complete, or they are correctly on the payment-approval page),
+  // then render the protected content.
+  // At this point, `auth.isLoading` might still be `true` (e.g., if `updateUserPaymentStatus`
+  // is in progress), but `ProtectedRoute` will no longer prevent `children` from rendering,
+  // allowing `PaymentApprovalPage` to retain its state and display its own internal loader.
   return children;
 };
 

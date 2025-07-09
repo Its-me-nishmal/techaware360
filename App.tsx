@@ -37,14 +37,16 @@ const App = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/join" element={<JoinPage />} />
           <Route path="/ref/:code" element={<ReferralPage />} />
+          {/* Route for the current user's referrals */}
+          <Route path="/my-referrals" element={<ReferralPage />} />
           
-          <Route 
-            path="/payment-approval" 
+          <Route
+            path="/payment-approval"
             element={
               <ProtectedRoute>
                 <PaymentApprovalPage />
               </ProtectedRoute>
-            } 
+            }
           />
           <Route 
             path="/course" 

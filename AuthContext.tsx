@@ -1,6 +1,6 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useMemo } from 'react'; // Added useMemo
 import { AuthenticatedUser, AuthContextType } from './types';
-import *  as api from './api'; // Using namespaced import for the new api module
+import *  as api from './api';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -16,7 +16,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     setUser(null);
     setToken(null);
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
   }, []);
 
   const checkAuthStatus = useCallback(async () => {
@@ -47,73 +46,80 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuthStatus();
   }, [checkAuthStatus]);
 
-  const login = async (idToken: string, referralCode?: string | null): Promise<{ success: boolean; needsPayment?: boolean; message?: string }> => {
+  const login = useCallback(async (idToken: string, referralCode?: string | null): Promise<{ success: boolean; needsPayment?: boolean; message?: string }> => {
     setIsLoading(true);
     try {
+      console.log(referralCode)
       const response = await api.googleSignIn(idToken, referralCode);
+      console.log(response,'newww');
       if (response.success && response.token && response.user) {
-        // Backend provides a token regardless of payment status.
-        // The token itself contains the 'paymentComplete' status.
         localStorage.setItem(TOKEN_STORAGE_KEY, response.token);
         setToken(response.token);
         setUser(response.user);
         setIsAuthenticated(true);
-        setIsLoading(false);
         return { success: true, needsPayment: response.needsPayment, message: response.message };
       }
-      
       clearAuthState();
-      setIsLoading(false);
       return { success: false, message: response.message || 'Login failed' };
     } catch (error) {
       console.error("Login error:", error);
       clearAuthState();
-      setIsLoading(false);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during login.';
       return { success: false, message: errorMessage };
+    } finally { // Ensure isLoading is set to false regardless of success/failure
+        setIsLoading(false);
     }
-  };
-
-  const logout = useCallback(async () => {
-    setIsLoading(true);
-    // For stateless JWT, we just need to clear the client-side token.
-    // An optional backend call could be made here to blacklist the token if needed.
-    clearAuthState();
-    setIsLoading(false);
   }, [clearAuthState]);
 
-  const updateUserPaymentStatus = async (): Promise<{ success: boolean; message?: string }> => {
+  const logout = useCallback(async () => {
+    setIsLoading(true); // Indicate loading while logging out
+    clearAuthState();
+    setIsLoading(false); // Finished logging out
+    localStorage.removeItem('techAwareAuthToken')
+  }, [clearAuthState]);
+
+  const updateUserPaymentStatus = useCallback(async (): Promise<{ success: boolean; message?: string }> => {
     const currentToken = token || localStorage.getItem(TOKEN_STORAGE_KEY);
     if (!currentToken) {
         return { success: false, message: 'Authentication token not found.' };
     }
-    
-    setIsLoading(true);
+
+    setIsLoading(true); // Indicate global loading (though PaymentApprovalPage has its own too)
     try {
-      // Backend uses the token to identify the user and check their payment status.
       const response = await api.checkPaymentStatus(currentToken);
       if (response.success && response.token && response.user) {
-        // On success, backend returns an updated token with paymentComplete=true
         localStorage.setItem(TOKEN_STORAGE_KEY, response.token);
         setToken(response.token);
         setUser(response.user);
-        setIsAuthenticated(true); // User is fully authenticated
-        setIsLoading(false);
+        setIsAuthenticated(true);
         return { success: true, message: response.message };
       }
-      setIsLoading(false);
+      console.log(response.message);
       return { success: false, message: response.message || 'Failed to update payment status.' };
     } catch (error) {
       console.error("Payment status update error:", error);
-      setIsLoading(false);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while updating payment status.';
       return { success: false, message: errorMessage };
+    } finally {
+      setIsLoading(false); // Finished loading
     }
-  };
-  
+  }, [token, setUser, setIsAuthenticated]); // Added setUser, setIsAuthenticated to deps for useCallback stability
+
+  // Use useMemo to prevent the context value object from changing on every render,
+  // which can cause unnecessary re-renders in consuming components.
+  const contextValue = useMemo(() => ({
+    isLoading,
+    isAuthenticated,
+    user,
+    token,
+    login,
+    logout,
+    checkAuthStatus,
+    updateUserPaymentStatus,
+  }), [isLoading, isAuthenticated, user, token, login, logout, checkAuthStatus, updateUserPaymentStatus]);
 
   return (
-    <AuthContext.Provider value={{ isLoading, isAuthenticated, user, token, login, logout, checkAuthStatus, updateUserPaymentStatus }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

@@ -41,6 +41,7 @@ export const googleSignIn = (
   idToken: string,
   referralCode?: string | null
 ): Promise<{ success: boolean; message: string; token?: string; user?: AuthenticatedUser; needsPayment?: boolean }> => {
+  console.log(referralCode)
   return fetch(`${API_BASE_URL}/auth/google/signin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -73,5 +74,19 @@ export const checkPaymentStatus = (
   return fetch(`${API_BASE_URL}/payment/status`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}` },
+  }).then(handleResponse);
+};
+
+/**
+ * Fetches the list of referred users for the authenticated user.
+ * @param token The authentication token.
+ */
+export const getMyReferrals = (token: string): Promise<{ success: boolean; referredUsers: { _id: string; email: string; name: string; paymentComplete: boolean }[] }> => {
+  return fetch(`${API_BASE_URL}/auth/my-referrals`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
   }).then(handleResponse);
 };

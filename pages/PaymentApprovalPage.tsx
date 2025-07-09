@@ -1,62 +1,95 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n';
-import { useAuth } from '../AuthContext'; // Import useAuth
+import { useAuth } from '../AuthContext';
 import { CreditCard, Clock, CheckCircle, Loader2, UserCircle, Mail } from 'lucide-react';
 
 const PaymentApprovalPage = () => {
   const { translate } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
-  const auth = useAuth(); // Use Auth context
+  const auth = useAuth();
 
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
-  
-  // Prioritize user data from AuthContext, fallback to location state (for initial render before auth context is fully populated)
+
+  // Prioritize user data from AuthContext, fallback to location state
   const currentUser = auth.user || (location.state as { email: string; name: string; profilePicUrl?: string });
 
+  // *** Diagnostic useEffect to confirm mount/unmount ***
   useEffect(() => {
+    console.log("PaymentApprovalPage mounted!");
+    return () => {
+      console.log("PaymentApprovalPage unmounted!");
+    };
+  }, []); // Runs only on initial mount and final unmount
+
+  useEffect(() => {
+    // This useEffect runs on mount and whenever auth.isAuthenticated, auth.user, auth.isLoading change
+    console.log("PaymentApprovalPage useEffect run.");
+    console.log("Auth state:", { isAuthenticated: auth.isAuthenticated, user: auth.user, isLoading: auth.isLoading });
+
     // If user is authenticated and payment is complete, redirect to course
     if (auth.isAuthenticated && auth.user?.paymentComplete) {
+      console.log("Payment complete, redirecting to /course.");
       navigate('/course', { replace: true });
+      return; // Exit early to prevent further execution in this render
     }
     // If no user data at all (e.g., direct navigation), redirect to join
+    // Ensure auth is not loading before deciding user is not authenticated
     if (!auth.isLoading && !auth.isAuthenticated) {
+        console.log("Not authenticated and not loading, redirecting to /join.");
         navigate('/join', { replace: true });
+        return; // Exit early
     }
   }, [auth.isAuthenticated, auth.user, auth.isLoading, navigate]);
 
 
   const handleCheckStatus = async () => {
+    console.log("handleCheckStatus initiated.");
     setIsCheckingStatus(true);
-    setStatusMessage('');
+    setStatusMessage(''); // Clear previous message
+    console.log("statusMessage state cleared.");
+
     try {
-      // Call AuthContext function which now uses the stored token for auth
       const response = await auth.updateUserPaymentStatus();
+      console.log("API response received:", response);
+
       if (response.success) {
-        setStatusMessage(translate('paymentApprovedMessage', 'Payment approved! Redirecting to course...'));
-        // AuthContext will update isAuthenticated and user, the useEffect hook will handle redirection.
-        // Adding a manual redirect after a delay for user feedback.
+        const msg = translate('paymentApprovedMessage', 'Payment approved! Redirecting to course...');
+        setStatusMessage(msg);
+        console.log("Setting success statusMessage:", msg);
+        // The useEffect above *will* handle redirection as soon as auth.user.paymentComplete becomes true.
+        // This timeout is primarily for user feedback, but the useEffect is the authoritative redirector.
         setTimeout(() => {
           navigate('/course', { replace: true });
         }, 2000);
       } else {
-        setStatusMessage(response.message || translate('paymentPendingApprovalMessage', 'Payment is still pending approval. Please check again later.'));
+        const msg = response.message || translate('paymentPendingApprovalMessage', 'Payment is still pending approval. Please check again later.');
+        setStatusMessage(msg);
+        console.log("Setting pending/error statusMessage:", msg);
       }
     } catch (err) {
         const error = err as Error;
-        setStatusMessage(error.message || translate('paymentStatusError', 'Error checking payment status.'));
+        const msg = error.message || translate('paymentStatusError', 'Error checking payment status.');
+        setStatusMessage(msg);
+        console.log("Setting catch error statusMessage:", msg);
+    } finally {
+        setIsCheckingStatus(false);
+        console.log("Finished handleCheckStatus. isCheckingStatus set to false.");
     }
-    setIsCheckingStatus(false);
   };
+
+  // Logging the statusMessage just before render to see its final value
+  console.log("Rendering PaymentApprovalPage. Current statusMessage state:", statusMessage);
 
   if (auth.isLoading || (!currentUser?.email && !auth.user)) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin h-12 w-12 text-primary" /></div>;
   }
-  
+
   // If payment is already complete (e.g., user re-navigates here), show success message
   if (auth.user?.paymentComplete) {
+     console.log("Auth user paymentComplete is true, showing already approved message.");
      return (
         <div className="container mx-auto px-4 py-12">
             <div className="max-w-lg mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl text-center">
@@ -122,7 +155,7 @@ const PaymentApprovalPage = () => {
                 </div>
               </div>
             </div>
-            
+
             <button
               onClick={handleCheckStatus}
               disabled={isCheckingStatus || auth.isLoading}
@@ -136,12 +169,12 @@ const PaymentApprovalPage = () => {
               {translate('checkPaymentStatusButton', 'Confirm My Payment')}
             </button>
           </>
-        
+
 
         {statusMessage && (
           <p className={`mt-4 text-sm text-center ${
-            statusMessage.includes('approved') ? 'text-green-600 dark:text-green-400' 
-            : statusMessage.includes('pending') ? 'text-yellow-600 dark:text-yellow-400' 
+            statusMessage.includes('approved') ? 'text-green-600 dark:text-green-400'
+            : statusMessage.includes('pending') ? 'text-yellow-600 dark:text-yellow-400'
             : 'text-red-500 dark:text-red-400'
           }`}>
             {statusMessage}

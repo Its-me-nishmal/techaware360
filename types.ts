@@ -55,6 +55,7 @@ export interface AuthenticatedUser {
   name: string;
   profilePicUrl?: string;
   paymentComplete: boolean;
+  referralCode: string | null; // Added referralCode
   // Any other app-specific user details can be added here
 }
 

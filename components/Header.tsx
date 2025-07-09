@@ -58,9 +58,15 @@ const Header = () => {
               </NavLink>
             ) : !auth.isAuthenticated ? (
               <NavLink to="/join" className={navLinkClass}>
-                 <LogIn size={16} className="inline mr-1" />{translate('navJoin')}
+                <LogIn size={16} className="inline mr-1" />{translate('navJoin')}
               </NavLink>
             ): null }
+            {/* Link to My Referrals page */}
+            {auth.isAuthenticated && (
+              <NavLink to="/my-referrals" className={navLinkClass}>
+                {translate('navReferrals', 'Referrals')}
+              </NavLink>
+            )}
 
             {auth.isAuthenticated && (
               <button
@@ -149,7 +155,17 @@ const Header = () => {
                   <LogIn size={18} className="inline mr-1.5" />{translate('navJoin')}
                 </NavLink>
               ) : null}
-
+              {/* Link to My Referrals page */}
+              {auth.isAuthenticated && (
+                <NavLink
+                  to="/my-referrals"
+                  className={({ isActive }) => mobileNavLinkClass(isActive)}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {translate('navReferrals', 'Referrals')}
+                </NavLink>
+              )}
+      
               {auth.isAuthenticated && (
                 <button
                   onClick={handleLogout}
