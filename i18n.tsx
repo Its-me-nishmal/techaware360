@@ -103,9 +103,15 @@ const AppTranslations: Translations = {
   referralCodeActive: { en: 'Active Referral Code', ml: 'സജീവമായ ശുപാർശ കോഡ്' },
   unexpectedError: { en: 'An unexpected error occurred. Please try again.', ml: 'അപ്രതീക്ഷിതമായ ഒരു പിശക് സംഭവിച്ചു. ദയവായി വീണ്ടും ശ്രമിക്കുക.' },
   loginFailedError: { en: 'Login failed. Please check your credentials and try again.', ml: 'ലോഗിൻ പരാജയപ്പെട്ടു. ദയവായി നിങ്ങളുടെ ക്രെഡൻഷ്യലുകൾ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.' },
-  priceInfo: { en: 'One-time payment of ₹199 for lifetime access.', ml: 'ആജീവനാന്ത പ്രവേശനത്തിനായി ₹199 ഒറ്റത്തവണ പേയ്മെൻ്റ്.' },
-  paymentAfterGoogleSignIn: { en: 'You will be directed to payment options after signing in.', ml: 'സൈൻ ഇൻ ചെയ്ത ശേഷം നിങ്ങളെ പേയ്‌മെൻ്റ് ഓപ്ഷനുകളിലേക്ക് നയിക്കും.' },
-  
+priceInfo: {
+  en: 'One-time payment of ₹299 for lifetime access.',
+  ml: 'ആജീവനാന്ത പ്രവേശനത്തിനായി ₹299 ഒറ്റത്തവണ പേയ്മെൻ്റ്.'
+},
+paymentAfterGoogleSignIn: {
+  en: 'After signing in, please send ₹299 via any UPI app to UPI ID nishmal@sbi or mobile number 7994107442. Take a screenshot and send it to WhatsApp at 7994107442.',
+  ml: 'സൈൻ ഇൻ ചെയ്തതിന് ശേഷം, ഏതെങ്കിലും UPI ആപ്പ് ഉപയോഗിച്ച് ₹299 nishmal@sbi എന്ന UPI ഐഡിയിലേക്കോ മൊബൈൽ നമ്പർ 7994107442 ലേക്കോ അയയ്ക്കുക. സ്ക്രീൻഷോട്ട് എടുത്ത് വാട്‌സ്ആപ്പിൽ 7994107442 ലേക്ക് അയയ്ക്കുക.'
+}
+,
   // Referral Page
   referralCodeSaved: { en: 'Your referral code', ml: 'നിങ്ങളുടെ ശുപാർശ കോഡ്' },
   hasBeenSaved: { en: 'has been saved.', ml: 'സേവ് ചെയ്തിരിക്കുന്നു.' },
