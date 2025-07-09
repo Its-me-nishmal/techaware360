@@ -127,10 +127,23 @@ const AppTranslations: Translations = {
   welcomeUser: { en: 'Welcome, {userName}!', ml: 'സ്വാഗതം, {userName}!' },
   paymentInstructionsTitle: { en: 'Payment Instructions', ml: 'പേയ്‌മെൻ്റ് നിർദ്ദേശങ്ങൾ' },
   completeYourPaymentPrompt: { en: 'To access the course, please complete your payment:', ml: 'കോഴ്സ് ആക്സസ് ചെയ്യുന്നതിന്, ദയവായി നിങ്ങളുടെ പേയ്‌മെൻ്റ് പൂർത്തിയാക്കുക:' },
-  paymentInstruction1: { en: 'Scan the QR code or use the UPI ID provided by the admin.', ml: 'അഡ്മിൻ നൽകിയ QR കോഡ് സ്കാൻ ചെയ്യുക അല്ലെങ്കിൽ UPI ഐഡി ഉപയോഗിക്കുക.' },
-  paymentNoteMentionEmail: { en: 'Important: Please mention your email ({userEmail}) or name in the payment reference/notes if possible.', ml: 'പ്രധാനപ്പെട്ടത്: സാധ്യമെങ്കിൽ പേയ്‌മെൻ്റ് റഫറൻസിൽ/കുറിപ്പുകളിൽ നിങ്ങളുടെ ഇമെയിൽ ({userEmail}) അല്ലെങ്കിൽ പേര് ദയവായി പരാമർശിക്കുക.' },
-  approvalProcessTitle: { en: 'Approval Process', ml: 'അംഗീകാര പ്രക്രിയ' },
-  approvalTimeInfo: { en: 'After payment, account activation is manual and typically takes up to 3 hours. We appreciate your patience.', ml: 'പേയ്‌മെൻ്റിന് ശേഷം, അക്കൗണ്ട് ആക്റ്റിവേഷൻ നേരിട്ടുള്ളതാണ്, സാധാരണയായി 3 മണിക്കൂർ വരെ എടുത്തേക്കാം. നിങ്ങളുടെ ക്ഷമയെ ഞങ്ങൾ അഭിനന്ദിക്കുന്നു.' },
+ paymentInstruction1: {
+  en: 'Pay ₹299 using any UPI app to UPI ID nishmal@sbi or mobile number 7994107442. Take a screenshot and send it to WhatsApp at 7994107442.',
+  ml: 'ഏതെങ്കിലും UPI ആപ്പ് ഉപയോഗിച്ച് ₹299 nishmal@sbi എന്ന UPI ഐഡിയിലേക്കോ മൊബൈൽ നമ്പർ 7994107442 ലേക്കോ അയയ്ക്കുക. സ്ക്രീൻഷോട്ട് എടുത്ത് വാട്‌സ്ആപ്പിൽ 7994107442 ലേക്ക് അയയ്ക്കുക.'
+},
+paymentNoteMentionEmail: {
+  en: 'Important: Please mention your email ({userEmail}) or name in the payment reference/notes if possible.',
+  ml: 'പ്രധാനപ്പെട്ടത്: സാധ്യമെങ്കിൽ പേയ്‌മെൻ്റ് റഫറൻസിൽ/കുറിപ്പുകളിൽ നിങ്ങളുടെ ഇമെയിൽ ({userEmail}) അല്ലെങ്കിൽ പേര് ദയവായി പരാമർശിക്കുക.'
+},
+approvalProcessTitle: {
+  en: 'Approval Process',
+  ml: 'അംഗീകാര പ്രക്രിയ'
+},
+approvalTimeInfo: {
+  en: 'After payment, account activation is manual and typically takes up to 3 hours. We appreciate your patience.',
+  ml: 'പേയ്‌മെൻ്റിന് ശേഷം, അക്കൗണ്ട് ആക്റ്റിവേഷൻ മാനുവലാണ്, സാധാരണയായി 3 മണിക്കൂർ വരെ എടുത്തേക്കാം. നിങ്ങളുടെ ക്ഷമയെ ഞങ്ങൾ അഭിനന്ദിക്കുന്നു.'
+}
+,
   checkPaymentStatusButton: { en: 'Confirm My Payment', ml: 'എൻ്റെ പേയ്‌മെൻ്റ് സ്ഥിരീകരിക്കുക' },
   paymentAlreadyApprovedTitle: { en: 'Payment Approved!', ml: 'പേയ്‌മെൻ്റ് അംഗീകരിച്ചു!' },
   paymentAlreadyApprovedDesc: { en: 'Your access to the course is active. Enjoy learning!', ml: 'കോഴ്സിലേക്കുള്ള നിങ്ങളുടെ പ്രവേശനം സജീവമാണ്. പഠനം ആസ്വദിക്കൂ!' },
