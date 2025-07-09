@@ -129,7 +129,7 @@ export const CourseProgressProvider = ({ children }: { children: ReactNode }) =>
       return;
     }
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('techAwareAuthToken');
     if (!token) {
       console.warn('No token found, cannot sync with backend');
     }
