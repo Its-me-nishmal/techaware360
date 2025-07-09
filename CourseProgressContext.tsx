@@ -41,7 +41,7 @@ export const CourseProgressProvider = ({ children }: { children: ReactNode }) =>
   useEffect(() => {
     const loadProgress = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('techAwareAuthToken');
         if (!token) throw new Error('No token found');
 
         const res = await axios.get(`${API_BASE_URL}/course/progress`, {
